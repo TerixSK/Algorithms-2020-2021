@@ -1,0 +1,164 @@
+#include <fstream>
+#include <vector>
+
+using namespace std;
+
+// Задаём размеры mainМножества и множества ключ-значений
+int MultiMapSize = 10001;
+int SetSize = 101;
+
+struct Set // Создаём множество, которое будеи хранить
+{
+    string key; // ключ
+    vector < vector <string>> values; // и множество значений
+    Set()
+    {
+        values.resize(SetSize); // задаём размер множеству значений
+    }
+};
+struct MultiMap // Создаём мейн_множество, которое будет хранить множество set
+{
+    vector< vector<Set> > set;
+    MultiMap()
+    {
+        set.resize(MultiMapSize); // задаём размер множеству
+    }
+};
+// ---------------
+MultiMap Mmap; // инициализируем наше мейн_множество
+// ---------------
+
+int Hash(string key, int vector_size) // Функция для хеширование элементов
+{
+    int hashCode = 0;
+    int help = 1;
+    for (char i : key)
+    {
+        hashCode += help * (int)i;
+        hashCode %= MultiMapSize;
+        help = (help * 37) % MultiMapSize;
+    }
+    return hashCode;
+}
+
+void Put(const string& key, const string& value) // Процедура добовление элементов в множество
+{
+    int hash_key = Hash(key, MultiMapSize); // хешируем ключ
+    for (auto& i : Mmap.set[hash_key])
+    {
+        if (i.key == key) // поиск по хешу ключа
+        {
+            int hash_value = Hash(value, SetSize); // хешируем значение элемента
+            for (const auto& j : i.values[hash_value])		// Блок
+                if (j == value)						// Если такое ключ-значение уже есть в нашем множестве
+                    return;							//
+            i.values[hash_value].push_back(value); // Блок
+            return;									// Если данный ключ уже есть в множестве, но данного значения в нём нет
+        }
+    }
+    // Блок: если данного ключ-значения нет в нашем множестве
+    Set* new_set = new Set; // создаём множество ключ-значений
+    new_set->key = key;	// записываем ключ
+    new_set->values[Hash(value, SetSize)].push_back(value); // заряжаем значение
+    Mmap.set[hash_key].push_back(*new_set); // заряжаем получившиеся мн. в мейн_мн.
+    delete new_set; // после того как мы зарядили наше мн. удаляем структуру
+}
+
+void Del(const string& key, const string& value) // Процедура удаления значения для данного ключа
+{
+    int hash_key = Hash(key, MultiMapSize); // хешируем ключ
+    for (auto& i : Mmap.set[hash_key])                          //
+    {                                                               //
+        if (i.key == key)                                           //
+        {                                                           // Блок
+            int hash_value = Hash(value, SetSize);            // Поиск удаляемого значения
+            for (int j = 0; j < i.values[hash_value].size(); j++)   //
+            {                                                       //
+                if (i.values[hash_value][j] == value)               //
+                {
+                    i.values[hash_value].erase(i.values[hash_value].begin() + j); // удаление значения
+                    return;
+                }
+            }
+        }
+    }
+}
+
+void DelAll(const string& key) // Процедура удаления всех значений для данного ключа
+{
+    int hash_key = Hash(key, MultiMapSize); // хешируем ключ
+    for (auto& i : Mmap.set[hash_key])
+    {
+        if (i.key == key) // ищем данный ключ
+        {
+            for (auto& j : i.values) // запускаем цикл для множества значений ключа
+            {
+                while (!j.empty()) // пока множество не пусто
+                    j.pop_back(); // удаляем последнее значение
+            }
+            return;
+        }
+    }
+}
+
+ifstream fin("multimap.in");
+ofstream fout("multimap.out");
+
+void Get(string& key) // Функция поиска всех значений для данного ключа
+{
+    vector<string> answer; // создаём пустое мн. значений для данного ключа, в который вернём как ответ
+    int hash_key = Hash(key, MultiMapSize); // хешируем ключ
+    for (auto& i : Mmap.set[hash_key])
+    {
+        if (i.key == key) // ищем данный ключ
+        {
+            for (auto& j : i.values) // запускаем цикл для множества значений ключа
+                for (auto& k : j) // запускаем цикл для значений
+                    answer.push_back(k); // записываем все значения в ответ
+        }
+    }
+    fout << answer.size() << " ";
+    for (auto& i : answer)
+    {
+        fout << answer.back() << " ";
+        answer.pop_back();
+    }
+    answer.clear();
+    fout << endl;
+}
+
+int main()
+{
+    ifstream fin("multimap.in");
+    ofstream fout("multimap.out");
+    while (!fin.eof())
+    {
+        string com;
+        fin >> com;
+        if (com == "put")
+        {
+            string key, value;
+            fin >> key >> value;
+            Put(key, value);
+        }
+        else if (com == "delete")
+        {
+            string key, value;
+            fin >> key >> value;
+            Del(key, value);
+        }
+        else if (com == "deleteall")
+        {
+            string key;
+            fin >> key;
+            DelAll(key);
+        }
+        else if (com == "get")
+        {
+            string key;
+            fin >> key;
+            Get(key);
+        }
+    }
+    return 0;
+}

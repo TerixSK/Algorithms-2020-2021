@@ -1,0 +1,59 @@
+#include <fstream>
+#include <vector>
+using namespace std;
+
+const int HashTableSize = 100001; // Размер хеш-таблицы
+vector<long> HashTable[HashTableSize]; // Создаём хеш-таблицу
+
+int Search(vector<long> a, long element) // Функция, поиска элемента в хеш-таблице
+{
+    for (int i = 0; i < a.size(); i++) // цикл по всем элементам таблицы
+        if (a[i] == element) // если встретели нужный элемент
+            return i; // возвращаем его индекс
+    return 0; // возвращаем ноль
+}
+
+
+
+int main() 
+{
+    ifstream fin("set.in");
+    ofstream fout("set.out");
+    string Command; // инициализируем комманду
+    while (fin >> Command) // запускаем цикл пока будут вводиться команды из файла
+    {
+        if (Command == "insert") // ввести элемент в хеш-таблицу
+        {
+            long element; // инициализируем новый элемент 
+            fin >> element; // вводим
+            long hash = abs(element % HashTableSize); // хешируем элемент
+            int b = Search(HashTable[hash], element); // ищем индекс элемент в векторе
+            if (HashTable[hash].empty() || HashTable[hash][b] != element) // если вектор не пустой и если этого элемента ещё нет в хеш-таблице
+                HashTable[hash].push_back(element); // заряжаем элемент в вектор
+        }
+        else if (Command == "delete") // удалить элемент из хеш-таблицы
+        {
+            long element; // инициализируем новый элемент 
+            fin >> element; // вводим
+            long hash = abs(element % HashTableSize); // хешируем элемент
+            int b = Search(HashTable[hash], element); // ищем индекс элемент в вектор
+            if (!HashTable[hash].empty() && HashTable[hash][b] == element) // если вектор не пустой и если этот элемент есть в хеш-таблице
+            {
+                swap(HashTable[hash][b], HashTable[hash][HashTable[hash].size() - 1]); // меняем местами наш элемент с последним, потому что pop_back удаляет последний эл. в векторе
+                HashTable[hash].pop_back();
+            }
+        }
+        else if (Command == "exists") // поиск в хеш-таблице
+        {
+            long element; // инициализируем новый элемент 
+            fin >> element; // вводим
+            long hash = abs(element % HashTableSize); // хешируем элемент
+            int b = Search(HashTable[hash], element); // ищем индекс элемент в вектор
+            if (!HashTable[hash].empty() && HashTable[hash][b] == element) // если вектор не пустой и если этот элемент есть в хеш-таблице
+                fout << "true\n";
+            else 
+                fout << "false\n";
+        }
+    }
+    return 0;
+}

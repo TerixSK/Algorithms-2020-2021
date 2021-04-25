@@ -1,0 +1,62 @@
+#include <fstream>
+#include <vector>
+
+using namespace std;
+
+struct element // Создаём структура для описания элемента
+{
+	int value; // само число
+	int left; // индекс левого ребёнка
+	int right; // индекс правого ребёнка
+};
+
+int check(vector <int>& tops) // Рекрусивная функция проверки коррекности
+{
+	for (int i = 1; i < tops.size(); i++) // проверяем все вершины и если какая то вершина меньше, чем следующая, то дерево уже некорректно
+	{
+		if (tops[i] <= tops[i - 1])
+			return 1; //  флаг, обозначающий дерево не прошло проверку корректности
+	}
+	return 0; // если все вершины прошли проверку, то выводим флаг, обозначающий, что всё ок
+}
+
+void sort_tops(element* tree, vector <int>& tops, int x) // Рекрусивная функция псевдо сортировки вершин
+{
+	if (x != -1) // если у вершины нет ребёнка, то дальше функция не идёт
+	{
+		sort_tops(tree, tops, tree[x].left);  // запускаем рекерсию для левого ребёнка 
+		tops.push_back(tree[x].value);		  // заряжаем вершину в вектор
+		sort_tops(tree, tops, tree[x].right); // запускаем рекерсию для правого ребёнка  
+	}
+}
+
+int check_for_answer(element* tree, int x)
+{
+	vector <int> tops; // создаём вектор, который будет хранить вершины дерева
+	sort_tops(tree, tops, 0); // запускаем псевдо сортировку
+	return check(tops);
+}
+
+int main()
+{	
+	ifstream fin("check.in");
+	ofstream fout("check.out");
+	int n;
+	fin >> n;
+	element* tree = new element[n];
+	for (int i = 0; i < n; i++)
+	{
+		fin >> tree[i].value >> tree[i].left >> tree[i].right;
+		tree[i].left--;
+		tree[i].right--;
+	}
+
+	if (n == 0 || check_for_answer(tree, 0) == 0) // если флаг - ok или дерево не содержит элементов, то выводим "YES"
+		fout << "YES";
+	else
+		fout << "NO";
+
+	fin.close();
+	fout.close();
+	return 0;
+}
